@@ -8,7 +8,8 @@ const char *password = "holita02";
 
 // Configura los pines de los sensores
 #define DHT_PIN 5      // Pin de datos del sensor DHT11
-const int ldrPin = 32; // Pin del sensor LDR
+const int ldrPin1 = 32; // Pin del sensor LDR1
+const int ldrPin2 = 34; // Pin del sensor LDR2
 
 DHT dht(DHT_PIN, DHT11);
 
@@ -26,7 +27,7 @@ void setup() {
 
   // Inicializa el sensor DHT11
   dht.begin();
-  delay(2000);
+  delay(5000);
 }
 
 void loop() {
@@ -35,7 +36,8 @@ void loop() {
   float humidity = dht.readHumidity();
 
   // Lee el valor del sensor LDR
-  int ldrValue = analogRead(ldrPin);
+  int ldrValue1 = analogRead(ldrPin1);
+  int ldrValue2 = analogRead(ldrPin2);
 
   // Imprime los valores
   Serial.print("Temperatura: ");
@@ -46,9 +48,12 @@ void loop() {
   Serial.print(humidity);
   Serial.println(" %");
 
-  Serial.print("Valor del sensor LDR: ");
-  Serial.println(ldrValue);
+  Serial.print("Valor del sensor LDR1: ");
+  Serial.println(ldrValue1);
 
-  // Espera 10 segundos antes de realizar la próxima lectura
+  Serial.print("Valor del sensor LDR2: ");
+  Serial.println(ldrValue2);
+
+  // Espera 5 segundos antes de realizar la próxima lectura
   delay(5000);
 }
