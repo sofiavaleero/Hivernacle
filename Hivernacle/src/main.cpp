@@ -14,6 +14,9 @@ const char *password = "holita02";
 #define OLED_RESET 22   // Pin de datos de la pantalla
 const int ldrPin1 = 32; // Pin del sensor LDR1
 const int ldrPin2 = 34; // Pin del sensor LDR2
+const float limitTemperatura = 24;
+const float limitHumitat = 70;
+const float limitLluminositat = 700;
 
 DHT dht(DHT_PIN, DHT11);
 Adafruit_SSD1306 display(128, 64, &Wire, OLED_RESET);
@@ -68,6 +71,29 @@ void loop() {
 
   // Limpia el display
   display.clearDisplay();
+
+  if (temperature > limitTemperatura) {
+    display.setCursor(0, 40);
+    display.print("¡Alerta! Alta temperatura");
+  }
+
+  if (temperature > limitHumitat) {
+    display.setCursor(0, 50);
+    display.print("¡Alerta! Alta temperatura");
+  }
+
+  if (ldrValue1 < limitLluminositat || ldrValue2 < limitLluminositat) {
+    display.setCursor(0, 60);
+    display.print("¡Alerta! Baja luminosidad");
+  }
+
+  else {
+  display.setCursor(0, 40);
+  display.print("Todo en orden");
+  }
+
+  display.clearDisplay();
+  delay(5000);
 
   // Imprime los valores en el display
   display.setTextSize(1);
