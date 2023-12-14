@@ -11,7 +11,7 @@ const char *password = "holita02";
 
 // Configura los pines de los sensores
 #define DHT_PIN 5      // Pin de datos del sensor DHT11
-#define OLED_RESET 4   // Pin de datos de la pantalla
+#define OLED_RESET 22   // Pin de datos de la pantalla
 const int ldrPin1 = 32; // Pin del sensor LDR1
 const int ldrPin2 = 34; // Pin del sensor LDR2
 
@@ -45,10 +45,22 @@ void setup() {
   display.clearDisplay();
 }
 
+// Función para calibrar la temperatura
+float calibrateTemperature(float currentTemperature) {
+  
+  // Aplica la corrección
+  float calibratedTemperature = currentTemperature - 3.0;
+
+  return calibratedTemperature;
+}
+
 void loop() {
   // Lee la temperatura y la humedad
   float temperature = dht.readTemperature();
   float humidity = dht.readHumidity();
+
+  //Calibra la temperatura
+  temperature = calibrateTemperature(temperature);
 
   // Lee el valor del sensor LDR
   int ldrValue1 = analogRead(ldrPin1);
