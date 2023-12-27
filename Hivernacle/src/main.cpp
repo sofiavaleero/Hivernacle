@@ -9,14 +9,36 @@
 const char *ssid = "iPhone de: Gisela";
 const char *password = "holita02";
 
+// Direccion del servidor Sentilo
+const char* host = "147.83.83.21";
+const char* token = "faa8638d3b90429830626f647fedb8c30c992176cb777e2aaaf10857a38933bf";
+const char* provider = "grup_3-101/";
+const char* sensor = "humidity/";
+const char* value = "34.5";
+//const char* sensor = "light/";
+// float LDRvalue = "500.0"
+const char* value = "500.0"; //Ajustar a quin serà el valor inicial de la lluminositat
+
+//Actualització de comandes PUT POST GET DELETE
+//PUT
+const char* putreq = "PUT /data/grup_3-101//humidity/20.9 HTTP/1.1\r\nIDENTITY_KEY: 9073208bedcc80ccdb7080bb24499bc92078e91a5997cb9e8c7b83d3643f9a53\r\n\r\n";
+//const char* putreqLDR = "PUT /data/grup_3-101//light/500.1 HTTP/1.1\r\nIDENTITY_KEY: 9073208bedcc80ccdb7080bb24499bc92078e91a5997cb9e8c7b83d3643f9a53\r\n\r\n";
+//GET
+//const char* getreq = "GET /data/grup_3-101//humidity/20.9 HTTP/1.1\r\nIDENTITY_KEY: 9073208bedcc80ccdb7080bb24499bc92078e91a5997cb9e8c7b83d3643f9a53\r\n\r\n"
+//const char* getreqLDR = "GET /data/grup_3-101//light/500.1 HTTP/1.1\r\nIDENTITY_KEY: 9073208bedcc80ccdb7080bb24499bc92078e91a5997cb9e8c7b83d3643f9a53\r\n\r\n"
+
 // Configura los pines de los sensores
 #define DHT_PIN 5      // Pin de datos del sensor DHT11
 #define OLED_RESET 22   // Pin de datos de la pantalla
 const int ldrPin1 = 32; // Pin del sensor LDR1
 const int ldrPin2 = 34; // Pin del sensor LDR2
-const float limitTemperatura = 24;
-const float limitHumitat = 70;
-const float limitLluminositat = 700;
+const float limitSuperiorTemperatura = 24;
+const float limitSuperiorHumitat = 70;
+const float limitSuperiorLluminositat = 700;
+const float limitInferiorTemperatura = 18;
+const float limitInferiorHumitat = 60;
+const float limitInferiorLluminositat = 600;
+
 
 DHT dht(DHT_PIN, DHT11);
 Adafruit_SSD1306 display(128, 64, &Wire, OLED_RESET);
@@ -58,6 +80,34 @@ float calibrateTemperature(float currentTemperature) {
 }
 
 void loop() {
+  // Mostarmos que queremos conectar con el servidor Sentilo
+  Serial.print("Abriendo la conexión con ");
+  Serial.println(host);
+
+  // Establecemos la conexion con el servidor Sentilo
+  WiFiClient client;
+  // Puerto HTTP
+  const int httpPort = 8081;
+  // Iniciamos la conexion
+  if (!client.connect(host, httpPort)) {
+    // ¿hay algún error al conectar?
+    Serial.println("Ha fallado la conexión");
+    return;
+  }
+  
+  // Enviamos el comando PUT definido
+  client.print(String(putreq));
+  //client.print(String(putreqLDR));
+
+  // Esperamos a que responda el servidor
+  unsigned long timeout = millis();
+  while (client.available() == 0) {
+    if (millis() - timeout > 5000) {
+      Serial.println(">>> Superado el tiempo de espera !");
+      client.stop();
+      return;
+    }
+  }
   // Lee la temperatura y la humedad
   float temperature = dht.readTemperature();
   float humidity = dht.readHumidity();
@@ -72,17 +122,17 @@ void loop() {
   // Limpia el display
   display.clearDisplay();
 
-  if (temperature > limitTemperatura) {
+  if (temperature > limitSuperiorTemperatura || temperature < limitInferiorLluminositat) {
     display.setCursor(0, 40);
     display.print("¡Alerta! Alta temperatura");
   }
 
-  if (temperature > limitHumitat) {
+  if (humidity > limitSuperiorHumitat || humidity < limitInferiorHumitat) {
     display.setCursor(0, 50);
     display.print("¡Alerta! Alta temperatura");
   }
 
-  if (ldrValue1 < limitLluminositat || ldrValue2 < limitLluminositat) {
+  if (ldrValue1 > limitSuperiorLluminositat || ldrValue2 > limitSuperiorLluminositat || ldrValue1 < limitInferiorLluminositat || ldrValue2 < limitInferiorLluminositat ) {
     display.setCursor(0, 60);
     display.print("¡Alerta! Baja luminosidad");
   }
@@ -138,4 +188,23 @@ void loop() {
 
   // Espera 5 segundos antes de realizar la próxima lectura
   delay(5000);
+
+    // Leemos la respuesta y la enviamos al monitor serie
+  while(client.available()){
+    String line = client.readStringUntil('\r');
+    Serial.print(line);
+  }
+
+  // si ha respondido esperamos un poco para cerrar la conexion con el servidor
+  timeout = millis();
+  while (millis() - timeout < 200);
+  // Cerramos la conexion
+  client.stop();
+  
+  Serial.print("Cerrando la conexión con ");
+  Serial.println(host);
+  while(1){
+    // ESperamos a cerrar los procesos de la conexión WiFi
+    delay(0); 
+  }
 }
