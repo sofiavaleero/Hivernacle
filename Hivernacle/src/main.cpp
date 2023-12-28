@@ -6,22 +6,22 @@
 #include <Adafruit_I2CDevice.h>
 
 // Configura tus credenciales de WiFi
-const char *ssid = "iPhone de: Gisela";
-const char *password = "holita02";
+const char *ssid = "iPhone de Paula";
+const char *password = "f472547F";
 
 // Direccion del servidor Sentilo
 const char* host = "147.83.83.21";
-const char* token = "faa8638d3b90429830626f647fedb8c30c992176cb777e2aaaf10857a38933bf";
-const char* provider = "grup_3-101/";
-const char* sensor = "humidity/";
-const char* value = "34.5";
+const char* token = "f3ac6fb7b1657a691e28dec382a41e0182f2289bd13f120e399f008bb03ed2f9";
+const char* provider = "grup_3-101@grup3_provider/";
+const char* sensor1 = "humitat/";
+const char* sensor2 = "temperatura/";
 //const char* sensor = "light/";
 // float LDRvalue = "500.0"
-const char* value = "500.0"; //Ajustar a quin serà el valor inicial de la lluminositat
+//const char* value = "500.0"; //Ajustar a quin serà el valor inicial de la lluminositat
 
 //Actualització de comandes PUT POST GET DELETE
 //PUT
-const char* putreq = "PUT /data/grup_3-101//humidity/20.9 HTTP/1.1\r\nIDENTITY_KEY: 9073208bedcc80ccdb7080bb24499bc92078e91a5997cb9e8c7b83d3643f9a53\r\n\r\n";
+//const char* putreq = "PUT /data/grup_3-101@grup3_provider/humitat/20.9 HTTP/1.1\r\nIDENTITY_KEY: f3ac6fb7b1657a691e28dec382a41e0182f2289bd13f120e399f008bb03ed2f9\r\n\r\n";
 //const char* putreqLDR = "PUT /data/grup_3-101//light/500.1 HTTP/1.1\r\nIDENTITY_KEY: 9073208bedcc80ccdb7080bb24499bc92078e91a5997cb9e8c7b83d3643f9a53\r\n\r\n";
 //GET
 //const char* getreq = "GET /data/grup_3-101//humidity/20.9 HTTP/1.1\r\nIDENTITY_KEY: 9073208bedcc80ccdb7080bb24499bc92078e91a5997cb9e8c7b83d3643f9a53\r\n\r\n"
@@ -89,15 +89,29 @@ void loop() {
   // Puerto HTTP
   const int httpPort = 8081;
   // Iniciamos la conexion
-  if (!client.connect(host, httpPort)) {
-    // ¿hay algún error al conectar?
-    Serial.println("Ha fallado la conexión");
-    return;
-  }
-  
-  // Enviamos el comando PUT definido
-  client.print(String(putreq));
-  //client.print(String(putreqLDR));
+  if (client.connect(host, httpPort)) {
+    // Lee la temperatura y la humedad
+  float temperature1 = dht.readTemperature();
+    //Calibra la temperatura
+  float temperature = calibrateTemperature(temperature1);
+  client.print("PUT /data/grup_3-101@grup3_provider/temperatura/");
+  client.print(temperature);
+  client.print(" HTTP/1.1\r\nIDENTITY_KEY: ");
+  client.print(token);
+  client.print("\r\n\r\n");
+
+  float humidity = dht.readHumidity();
+   // Enviamos el comando PUT definido
+  client.print("PUT /data/grup_3-101@grup3_provider/humitat/");
+  client.print(humidity);
+  client.print(" HTTP/1.1\r\nIDENTITY_KEY: ");
+  client.print(token);
+  client.print("\r\n\r\n");
+
+
+  // Lee el valor del sensor LDR
+  int ldrValue1 = analogRead(ldrPin1);
+  int ldrValue2 = analogRead(ldrPin2);
 
   // Esperamos a que responda el servidor
   unsigned long timeout = millis();
@@ -108,16 +122,10 @@ void loop() {
       return;
     }
   }
-  // Lee la temperatura y la humedad
-  float temperature = dht.readTemperature();
-  float humidity = dht.readHumidity();
-
-  //Calibra la temperatura
-  temperature = calibrateTemperature(temperature);
-
-  // Lee el valor del sensor LDR
-  int ldrValue1 = analogRead(ldrPin1);
-  int ldrValue2 = analogRead(ldrPin2);
+  /*while(client.available()){
+    String line = client.readStringUntil('/r');
+    Serial.print(line);
+  }*/
 
   // Limpia el display
   display.clearDisplay();
@@ -185,26 +193,23 @@ void loop() {
 
   Serial.print("Valor del sensor LDR2: ");
   Serial.println(ldrValue2);
-
-  // Espera 5 segundos antes de realizar la próxima lectura
-  delay(5000);
-
-    // Leemos la respuesta y la enviamos al monitor serie
-  while(client.available()){
-    String line = client.readStringUntil('\r');
-    Serial.print(line);
-  }
-
-  // si ha respondido esperamos un poco para cerrar la conexion con el servidor
-  timeout = millis();
-  while (millis() - timeout < 200);
-  // Cerramos la conexion
-  client.stop();
   
-  Serial.print("Cerrando la conexión con ");
-  Serial.println(host);
-  while(1){
-    // ESperamos a cerrar los procesos de la conexión WiFi
-    delay(0); 
+  if (!client.connect(host, httpPort)){
+    // si ha respondido esperamos un poco para cerrar la conexion con el servidor
+    Serial.print("Cerrando la conexión con ");
+    Serial.println(host);
+    timeout = millis();
+    while (millis() - timeout < 200);
+    // Cerramos la conexion
+    client.stop();
+  }
+    // Espera 5 segundos antes de realizar la próxima lectura
+  delay(15000);
+    
+  }
+  else{
+    // ¿hay algún error al conectar?
+    Serial.println("Ha fallado la conexión");
+    return;
   }
 }
