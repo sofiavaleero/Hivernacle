@@ -22,6 +22,9 @@ const char* sensor4 = "ldr2/";
 //const char* value = "500.0"; //Ajustar a quin serà el valor inicial de la lluminositat
 
 //Actualització de comandes PUT POST GET DELETE
+//PUT
+//const char* putreq = "PUT /data/grup_3-101@grup3_provider/humitat/20.9 HTTP/1.1\r\nIDENTITY_KEY: f3ac6fb7b1657a691e28dec382a41e0182f2289bd13f120e399f008bb03ed2f9\r\n\r\n";
+//const char* putreqLDR = "PUT /data/grup_3-101//light/500.1 HTTP/1.1\r\nIDENTITY_KEY: 9073208bedcc80ccdb7080bb24499bc92078e91a5997cb9e8c7b83d3643f9a53\r\n\r\n";
 //GET
 //const char* getreq = "GET /data/grup_3-101//humidity/20.9 HTTP/1.1\r\nIDENTITY_KEY: 9073208bedcc80ccdb7080bb24499bc92078e91a5997cb9e8c7b83d3643f9a53\r\n\r\n"
 //const char* getreqLDR = "GET /data/grup_3-101//light/500.1 HTTP/1.1\r\nIDENTITY_KEY: 9073208bedcc80ccdb7080bb24499bc92078e91a5997cb9e8c7b83d3643f9a53\r\n\r\n"
@@ -186,6 +189,5 @@ void loop() {
 
   Serial.print("Valor del sensor LDR2: ");
   Serial.println(ldrValue2);
-  
 }
 
