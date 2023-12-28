@@ -22,9 +22,6 @@ const char* sensor4 = "ldr2/";
 //const char* value = "500.0"; //Ajustar a quin serà el valor inicial de la lluminositat
 
 //Actualització de comandes PUT POST GET DELETE
-//PUT
-//const char* putreq = "PUT /data/grup_3-101@grup3_provider/humitat/20.9 HTTP/1.1\r\nIDENTITY_KEY: f3ac6fb7b1657a691e28dec382a41e0182f2289bd13f120e399f008bb03ed2f9\r\n\r\n";
-//const char* putreqLDR = "PUT /data/grup_3-101//light/500.1 HTTP/1.1\r\nIDENTITY_KEY: 9073208bedcc80ccdb7080bb24499bc92078e91a5997cb9e8c7b83d3643f9a53\r\n\r\n";
 //GET
 //const char* getreq = "GET /data/grup_3-101//humidity/20.9 HTTP/1.1\r\nIDENTITY_KEY: 9073208bedcc80ccdb7080bb24499bc92078e91a5997cb9e8c7b83d3643f9a53\r\n\r\n"
 //const char* getreqLDR = "GET /data/grup_3-101//light/500.1 HTTP/1.1\r\nIDENTITY_KEY: 9073208bedcc80ccdb7080bb24499bc92078e91a5997cb9e8c7b83d3643f9a53\r\n\r\n"
@@ -81,7 +78,7 @@ float calibrateTemperature(float currentTemperature) {
   return calibratedTemperature;
 }
 
-void sendSensorData(const char* sensor, float value) {
+void putdata(const char* sensor, float value) {
   WiFiClient client;
   const int httpPort = 8081;
 
@@ -109,6 +106,75 @@ void sendSensorData(const char* sensor, float value) {
   }
 }
 
+void analisidades(const char* sensor) {
+  WiFiClient client;
+  const int httpPort = 8081;
+
+  if (client.connect(host, httpPort)) {
+    client.print("GET /data/");
+    client.print(provider);
+    client.print(sensor);
+    client.print(" HTTP/1.1\r\nIDENTITY_KEY: ");
+    client.print(token);
+    client.print("\r\n\r\n");
+
+    unsigned long timeout = millis();
+    while (client.available() == 0) {
+      if (millis() - timeout > 5000) {
+        Serial.println(">>> Superado el tiempo de espera !");
+        client.stop();
+        return;
+      }
+    }
+
+    String response = client.readString();
+    Serial.println("Response:");
+    Serial.println(response);
+
+    // Parse the response to extract values
+    // Assuming the response format is like "value1,value2,value3,..."
+    String delimiter = ",";
+    int values[10];
+    int index = 0;
+    int pos = 0;
+
+    while ((pos = response.indexOf(delimiter)) != -1 && index < 10) {
+      String token = response.substring(0, pos);
+      values[index] = token.toInt();
+      response.remove(0, pos + delimiter.length());
+      index++;
+    }
+
+    // Find maximum and minimum values
+    int maxValue = values[0];
+    int minValue = values[0];
+
+    for (int i = 1; i < index; i++) {
+      if (values[i] > maxValue) {
+        maxValue = values[i];
+      }
+
+      if (values[i] < minValue) {
+        minValue = values[i];
+      }
+    }
+
+    Serial.print("Max value for ");
+    Serial.print(sensor);
+    Serial.print(": ");
+    Serial.println(maxValue);
+
+    Serial.print("Min value for ");
+    Serial.print(sensor);
+    Serial.print(": ");
+    Serial.println(minValue);
+
+    client.stop();
+  } else {
+    Serial.println("Ha fallado la conexión");
+  }
+}
+
 void loop() {
 
   float humidity = dht.readHumidity();
@@ -118,10 +184,15 @@ void loop() {
   int ldrValue1 = analogRead(ldrPin1);
   int ldrValue2 = analogRead(ldrPin2);
 
-  sendSensorData(sensor1, humidity);
-  sendSensorData(sensor2, temperature);
-  sendSensorData(sensor3, ldrValue1);
-  sendSensorData(sensor4, ldrValue2);
+  putdata(sensor1, humidity);
+  putdata(sensor2, temperature);
+  putdata(sensor3, ldrValue1);
+  putdata(sensor4, ldrValue2);
+
+  analisidades(sensor1);
+  analisidades(sensor2);
+  analisidades(sensor3);
+  analisidades(sensor4);
 
   // Limpia el display
   display.clearDisplay();
@@ -147,7 +218,6 @@ void loop() {
   }
 
   display.clearDisplay();
-  delay(5000);
 
   // Imprime los valores en el display
   display.setTextSize(1);
@@ -189,5 +259,6 @@ void loop() {
 
   Serial.print("Valor del sensor LDR2: ");
   Serial.println(ldrValue2);
+  delay(120000);
 }
 
