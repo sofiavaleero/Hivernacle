@@ -15,14 +15,13 @@ const char* token = "f3ac6fb7b1657a691e28dec382a41e0182f2289bd13f120e399f008bb03
 const char* provider = "grup_3-101@grup3_provider/";
 const char* sensor1 = "humitat/";
 const char* sensor2 = "temperatura/";
+const char* sensor3 = "ldr1/";
+const char* sensor4 = "ldr2/";
 //const char* sensor = "light/";
 // float LDRvalue = "500.0"
 //const char* value = "500.0"; //Ajustar a quin serà el valor inicial de la lluminositat
 
 //Actualització de comandes PUT POST GET DELETE
-//PUT
-const char* putreq = "PUT /data/grup_3-101@grup3_provider/humitat/20.9 HTTP/1.1\r\nIDENTITY_KEY: f3ac6fb7b1657a691e28dec382a41e0182f2289bd13f120e399f008bb03ed2f9\r\n\r\n";
-//const char* putreqLDR = "PUT /data/grup_3-101//light/500.1 HTTP/1.1\r\nIDENTITY_KEY: 9073208bedcc80ccdb7080bb24499bc92078e91a5997cb9e8c7b83d3643f9a53\r\n\r\n";
 //GET
 //const char* getreq = "GET /data/grup_3-101//humidity/20.9 HTTP/1.1\r\nIDENTITY_KEY: 9073208bedcc80ccdb7080bb24499bc92078e91a5997cb9e8c7b83d3643f9a53\r\n\r\n"
 //const char* getreqLDR = "GET /data/grup_3-101//light/500.1 HTTP/1.1\r\nIDENTITY_KEY: 9073208bedcc80ccdb7080bb24499bc92078e91a5997cb9e8c7b83d3643f9a53\r\n\r\n"
@@ -79,59 +78,47 @@ float calibrateTemperature(float currentTemperature) {
   return calibratedTemperature;
 }
 
-void loop() {
-  // Mostarmos que queremos conectar con el servidor Sentilo
-  Serial.print("Abriendo la conexión con ");
-  Serial.println(host);
-
-  // Establecemos la conexion con el servidor Sentilo
+void sendSensorData(const char* sensor, float value) {
   WiFiClient client;
-  // Puerto HTTP
   const int httpPort = 8081;
-  // Iniciamos la conexion
+
   if (client.connect(host, httpPort)) {
-    // Lee la temperatura y la humedad
-  float temperature1 = dht.readTemperature();
-    //Calibra la temperatura
-  float temperature = calibrateTemperature(temperature1);
-  client.print("PUT /data/");
-  client.print(provider);
-  client.print(sensor2);
-  client.print(temperature);
-  client.print(" HTTP/1.1\r\n");
-  client.print("IDENTITY_KEY: ");
-  client.print(token);
-  client.print("\r\n\r\n");
+    client.print("PUT /data/");
+    client.print(provider);
+    client.print(sensor);
+    client.print(value);
+    client.print(" HTTP/1.1\r\nIDENTITY_KEY: ");
+    client.print(token);
+    client.print("\r\n\r\n");
+
+    unsigned long timeout = millis();
+    while (client.available() == 0) {
+      if (millis() - timeout > 5000) {
+        Serial.println(">>> Superado el tiempo de espera !");
+        client.stop();
+        return;
+      }
+    }
+
+    client.stop();
+  } else {
+    Serial.println("Ha fallado la conexión");
+  }
+}
+
+void loop() {
 
   float humidity = dht.readHumidity();
-   // Enviamos el comando PUT definido
-  client.print("PUT /data/");
-  client.print(provider);
-  client.print(sensor1);
-  client.print(humidity);
-  client.print(" HTTP/1.1\r\n");
-  client.print("IDENTITY_KEY: ");
-  client.print(token);
-  client.print("\r\n\r\n");
-
-
+  float temperature1 = dht.readTemperature();
+  float temperature = calibrateTemperature(temperature1);
   // Lee el valor del sensor LDR
   int ldrValue1 = analogRead(ldrPin1);
   int ldrValue2 = analogRead(ldrPin2);
 
-  // Esperamos a que responda el servidor
-  unsigned long timeout = millis();
-  while (client.available() == 0) {
-    if (millis() - timeout > 5000) {
-      Serial.println(">>> Superado el tiempo de espera !");
-      client.stop();
-      return;
-    }
-  }
-  /*while(client.available()){
-    String line = client.readStringUntil('/r');
-    Serial.print(line);
-  }*/
+  sendSensorData(sensor1, humidity);
+  sendSensorData(sensor2, temperature);
+  sendSensorData(sensor3, ldrValue1);
+  sendSensorData(sensor4, ldrValue2);
 
   // Limpia el display
   display.clearDisplay();
@@ -199,25 +186,6 @@ void loop() {
 
   Serial.print("Valor del sensor LDR2: ");
   Serial.println(ldrValue2);
-  
-  if (!client.connect(host, httpPort)){
-    // si ha respondido esperamos un poco para cerrar la conexion con el servidor
-    Serial.print("Cerrando la conexión con ");
-    Serial.println(host);
-    timeout = millis();
-    while (millis() - timeout < 200);
-    // Cerramos la conexion
-    client.stop();
-  }
-    // Espera 5 segundos antes de realizar la próxima lectura
-  delay(15000);
-    
-  }
-  else{
-    // ¿hay algún error al conectar?
-    Serial.println("Ha fallado la conexión");
-    return;}
-  
   
 }
 
