@@ -1,9 +1,13 @@
 #include <WiFi.h>
 #include <Wire.h>
 #include <DHT.h>
+#include <ArduinoJson.h>
+#include <SD.h>
+#include <SPI.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 #include <Adafruit_I2CDevice.h>
+#include <algorithm>
 
 // Configura tus credenciales de WiFi
 const char *ssid = "iPhone de Paula";
@@ -38,7 +42,6 @@ const float limitInferiorTemperatura = 18;
 const float limitInferiorHumitat = 60;
 const float limitInferiorLluminositat = 600;
 
-
 DHT dht(DHT_PIN, DHT11);
 Adafruit_SSD1306 display(128, 64, &Wire, OLED_RESET);
 
@@ -71,10 +74,8 @@ void setup() {
 
 // Función para calibrar la temperatura
 float calibrateTemperature(float currentTemperature) {
-  
   // Aplica la corrección
   float calibratedTemperature = currentTemperature - 3.0;
-
   return calibratedTemperature;
 }
 
@@ -114,7 +115,8 @@ void analisidades(const char* sensor) {
     client.print("GET /data/");
     client.print(provider);
     client.print(sensor);
-    client.print(" HTTP/1.1\r\nIDENTITY_KEY: ");
+    client.print("/?limit=5 HTTP/1.1\r\n");
+    client.print("IDENTITY_KEY: ");
     client.print(token);
     client.print("\r\n\r\n");
 
@@ -131,43 +133,32 @@ void analisidades(const char* sensor) {
     Serial.println("Response:");
     Serial.println(response);
 
-    // Parse the response to extract values
-    // Assuming the response format is like "value1,value2,value3,..."
-    String delimiter = ",";
-    int values[10];
-    int index = 0;
-    int pos = 0;
+    // Parse the JSON response
+    const size_t capacity = JSON_OBJECT_SIZE(1) + 5 * JSON_OBJECT_SIZE(3) + 350;
+    DynamicJsonDocument doc(capacity);
+    deserializeJson(doc, response);
 
-    while ((pos = response.indexOf(delimiter)) != -1 && index < 10) {
-      String token = response.substring(0, pos);
-      values[index] = token.toInt();
-      response.remove(0, pos + delimiter.length());
-      index++;
+    // Extract values from the "observations" array
+    JsonArray observations = doc["observations"];
+    
+    float sumValues = 0.0;
+    int countValues = 0;
+
+    for (JsonObject observation : observations) {
+      float value = observation["value"].as<float>();
+      sumValues += value;
+      countValues++;
+
+      String timestamp = observation["timestamp"].as<String>();
+      Serial.print("Value: ");
+      Serial.println(value);
+      Serial.print("Timestamp: ");
+      Serial.println(timestamp);
     }
 
-    // Find maximum and minimum values
-    int maxValue = values[0];
-    int minValue = values[0];
-
-    for (int i = 1; i < index; i++) {
-      if (values[i] > maxValue) {
-        maxValue = values[i];
-      }
-
-      if (values[i] < minValue) {
-        minValue = values[i];
-      }
-    }
-
-    Serial.print("Max value for ");
-    Serial.print(sensor);
-    Serial.print(": ");
-    Serial.println(maxValue);
-
-    Serial.print("Min value for ");
-    Serial.print(sensor);
-    Serial.print(": ");
-    Serial.println(minValue);
+    float average = sumValues / 5.0;
+    Serial.print("Average: ");
+    Serial.println(average);
 
     client.stop();
   } else {
@@ -213,11 +204,9 @@ void loop() {
   }
 
   else {
-  display.setCursor(0, 40);
+  display.setCursor(0, 60);
   display.print("Todo en orden");
   }
-
-  display.clearDisplay();
 
   // Imprime los valores en el display
   display.setTextSize(1);
