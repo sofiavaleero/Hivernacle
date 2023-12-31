@@ -107,6 +107,7 @@ void putdata(const char* sensor, float value) {
   }
 }
 
+// Metode Get per obtenir les 10 ultimes dades del sensor
 void analisidades(const char* sensor) {
   WiFiClient client;
   const int httpPort = 8081;
@@ -133,37 +134,48 @@ void analisidades(const char* sensor) {
     Serial.println("Response:");
     Serial.println(response);
 
-    // Parse the JSON response
-    const size_t capacity = JSON_OBJECT_SIZE(1) + 5 * JSON_OBJECT_SIZE(3) + 350;
-    DynamicJsonDocument doc(capacity);
-    deserializeJson(doc, response);
+    // Parse the response to extract values
+    // Assuming the response format is like "value1,value2,value3,..."
+    String delimiter = ",";
+    int values[10];
+    int index = 0;
+    int pos = 0;
 
-    // Extract values from the "observations" array
-    JsonArray observations = doc["observations"];
-    
-    float sumValues = 0.0;
-    int countValues = 0;
-
-    for (JsonObject observation : observations) {
-      float value = observation["value"].as<float>();
-      sumValues += value;
-      countValues++;
-
-      String timestamp = observation["timestamp"].as<String>();
-      Serial.print("Value: ");
-      Serial.println(value);
-      Serial.print("Timestamp: ");
-      Serial.println(timestamp);
+    while ((pos = response.indexOf(delimiter)) != -1 && index < 10) {
+      String token = response.substring(0, pos);
+      values[index] = token.toInt();
+      response.remove(0, pos + delimiter.length());
+      index++;
     }
 
-    float average = sumValues / 5.0;
-    Serial.print("Average: ");
-    Serial.println(average);
+    // Find maximum and minimum values
+    int maxValue = values[0];
+    int minValue = values[0];
+
+    for (int i = 1; i < index; i++) {
+      if (values[i] > maxValue) {
+        maxValue = values[i];
+      }
+
+      if (values[i] < minValue) {
+        minValue = values[i];
+      }
+    }
+
+    Serial.print("Max value for ");
+    Serial.print(sensor);
+    Serial.print(": ");
+    Serial.println(maxValue);
+
+    Serial.print("Min value for ");
+    Serial.print(sensor);
+    Serial.print(": ");
+    Serial.println(minValue);
 
     client.stop();
   } else {
     Serial.println("Ha fallado la conexión");
-  }
+  }
 }
 
 void loop() {
@@ -189,22 +201,16 @@ void loop() {
   display.clearDisplay();
 
   if (temperature > limitSuperiorTemperatura || temperature < limitInferiorLluminositat) {
+    display.setCursor(0, 30);
+    display.print("¡Alerta! Alta temperatura");
+  } else if (humidity > limitSuperiorHumitat || humidity < limitInferiorHumitat) {
     display.setCursor(0, 40);
     display.print("¡Alerta! Alta temperatura");
-  }
-
-  if (humidity > limitSuperiorHumitat || humidity < limitInferiorHumitat) {
+  } else if (ldrValue1 > limitSuperiorLluminositat || ldrValue2 > limitSuperiorLluminositat || ldrValue1 < limitInferiorLluminositat || ldrValue2 < limitInferiorLluminositat ) {
     display.setCursor(0, 50);
-    display.print("¡Alerta! Alta temperatura");
-  }
-
-  if (ldrValue1 > limitSuperiorLluminositat || ldrValue2 > limitSuperiorLluminositat || ldrValue1 < limitInferiorLluminositat || ldrValue2 < limitInferiorLluminositat ) {
-    display.setCursor(0, 60);
     display.print("¡Alerta! Baja luminosidad");
-  }
-
-  else {
-  display.setCursor(0, 60);
+  } else {
+  display.setCursor(0, 40);
   display.print("Todo en orden");
   }
 
@@ -227,7 +233,7 @@ void loop() {
   display.print("LDR1: ");
   display.print(ldrValue1);
 
-  display.setCursor(0, 30);
+  display.setCursor(50, 20);
   display.print("LDR2: ");
   display.print(ldrValue2);
 
