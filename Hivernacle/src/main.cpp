@@ -106,6 +106,7 @@ void putdata(const char* sensor, float value) {
   }
 }
 
+// Metode Get per obtenir les 10 ultimes dades del sensor
 void analisidades(const char* sensor) {
   WiFiClient client;
   const int httpPort = 8081;
@@ -114,7 +115,8 @@ void analisidades(const char* sensor) {
     client.print("GET /data/");
     client.print(provider);
     client.print(sensor);
-    client.print(" HTTP/1.1\r\nIDENTITY_KEY: ");
+    client.print("/?limit=5 HTTP/1.1\r\n");
+    client.print("IDENTITY_KEY: ");
     client.print(token);
     client.print("\r\n\r\n");
 
@@ -131,48 +133,10 @@ void analisidades(const char* sensor) {
     Serial.println("Response:");
     Serial.println(response);
 
-    // Parse the response to extract values
-    // Assuming the response format is like "value1,value2,value3,..."
-    String delimiter = ",";
-    int values[10];
-    int index = 0;
-    int pos = 0;
-
-    while ((pos = response.indexOf(delimiter)) != -1 && index < 10) {
-      String token = response.substring(0, pos);
-      values[index] = token.toInt();
-      response.remove(0, pos + delimiter.length());
-      index++;
-    }
-
-    // Find maximum and minimum values
-    int maxValue = values[0];
-    int minValue = values[0];
-
-    for (int i = 1; i < index; i++) {
-      if (values[i] > maxValue) {
-        maxValue = values[i];
-      }
-
-      if (values[i] < minValue) {
-        minValue = values[i];
-      }
-    }
-
-    Serial.print("Max value for ");
-    Serial.print(sensor);
-    Serial.print(": ");
-    Serial.println(maxValue);
-
-    Serial.print("Min value for ");
-    Serial.print(sensor);
-    Serial.print(": ");
-    Serial.println(minValue);
-
     client.stop();
   } else {
     Serial.println("Ha fallado la conexión");
-  }
+  }
 }
 
 void loop() {
@@ -200,24 +164,17 @@ void loop() {
   if (temperature > limitSuperiorTemperatura || temperature < limitInferiorLluminositat) {
     display.setCursor(0, 40);
     display.print("¡Alerta! Alta temperatura");
-  }
-
-  if (humidity > limitSuperiorHumitat || humidity < limitInferiorHumitat) {
+  } else if (humidity > limitSuperiorHumitat || humidity < limitInferiorHumitat) {
     display.setCursor(0, 50);
     display.print("¡Alerta! Alta temperatura");
-  }
-
-  if (ldrValue1 > limitSuperiorLluminositat || ldrValue2 > limitSuperiorLluminositat || ldrValue1 < limitInferiorLluminositat || ldrValue2 < limitInferiorLluminositat ) {
+  } else if (ldrValue1 > limitSuperiorLluminositat || ldrValue2 > limitSuperiorLluminositat || ldrValue1 < limitInferiorLluminositat || ldrValue2 < limitInferiorLluminositat ) {
     display.setCursor(0, 60);
     display.print("¡Alerta! Baja luminosidad");
-  }
-
-  else {
+  } else {
   display.setCursor(0, 40);
   display.print("Todo en orden");
   }
 
-  display.clearDisplay();
 
   // Imprime los valores en el display
   display.setTextSize(1);
