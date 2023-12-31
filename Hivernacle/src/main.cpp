@@ -201,13 +201,13 @@ void loop() {
   display.clearDisplay();
 
   if (temperature > limitSuperiorTemperatura || temperature < limitInferiorLluminositat) {
-    display.setCursor(0, 40);
+    display.setCursor(0, 30);
     display.print("¡Alerta! Alta temperatura");
   } else if (humidity > limitSuperiorHumitat || humidity < limitInferiorHumitat) {
-    display.setCursor(0, 50);
+    display.setCursor(0, 40);
     display.print("¡Alerta! Alta temperatura");
   } else if (ldrValue1 > limitSuperiorLluminositat || ldrValue2 > limitSuperiorLluminositat || ldrValue1 < limitInferiorLluminositat || ldrValue2 < limitInferiorLluminositat ) {
-    display.setCursor(0, 60);
+    display.setCursor(0, 50);
     display.print("¡Alerta! Baja luminosidad");
   } else {
   display.setCursor(0, 40);
@@ -233,7 +233,7 @@ void loop() {
   display.print("LDR1: ");
   display.print(ldrValue1);
 
-  display.setCursor(0, 30);
+  display.setCursor(50, 20);
   display.print("LDR2: ");
   display.print(ldrValue2);
 
