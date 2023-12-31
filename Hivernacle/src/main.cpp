@@ -129,21 +129,29 @@ void analisidades(const char* sensor) {
       }
     }
 
-    String response = client.readString();
+    const int capacity = 2048;
+    char buffer[capacity];
+    size_t bytesRead = client.readBytes(buffer, capacity);
+
     Serial.println("Response:");
-    Serial.println(response);
+    Serial.write(buffer, bytesRead);
 
-    // Parse the JSON response
-    const size_t capacity = JSON_OBJECT_SIZE(1) + 5 * JSON_OBJECT_SIZE(3) + 350;
     DynamicJsonDocument doc(capacity);
-    deserializeJson(doc, response);
 
-    // Extract values from the "observations" array
+    DeserializationError error = deserializeJson(doc, buffer, bytesRead);
+    if (error) {
+      Serial.print(F("Error al deserializar JSON: "));
+      Serial.println(error.c_str());
+      return;
+    }
+
+    // Acceder a la matriz de observaciones
     JsonArray observations = doc["observations"];
     
     float sumValues = 0.0;
     int countValues = 0;
 
+    // Bucle para procesar las observaciones
     for (JsonObject observation : observations) {
       float value = observation["value"].as<float>();
       sumValues += value;
@@ -156,9 +164,14 @@ void analisidades(const char* sensor) {
       Serial.println(timestamp);
     }
 
-    float average = sumValues / 5.0;
-    Serial.print("Average: ");
-    Serial.println(average);
+    Serial.print("Cantidad de valores: ");
+    Serial.println(countValues);
+
+    if (countValues > 0) {
+      float average = sumValues / static_cast<float>(countValues);
+      Serial.print("Average: ");
+      Serial.println(average);
+    }
 
     client.stop();
   } else {
