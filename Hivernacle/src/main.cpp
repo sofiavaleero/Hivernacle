@@ -8,6 +8,8 @@
 #include <Adafruit_SSD1306.h>
 #include <Adafruit_I2CDevice.h>
 #include <algorithm>
+#include <driver/ledc.h>
+
 
 // Configura tus credenciales de WiFi
 const char *ssid = "iPhone de Paula";
@@ -35,12 +37,13 @@ const char* sensor4 = "ldr2/";
 #define OLED_RESET 22   // Pin de datos de la pantalla
 const int ldrPin1 = 32; // Pin del sensor LDR1
 const int ldrPin2 = 34; // Pin del sensor LDR2
+const int buzzerPin = 27; // Pin del buzzer AFEGIIIIIT
 const float limitSuperiorTemperatura = 24;
 const float limitSuperiorHumitat = 70;
 const float limitSuperiorLluminositat = 700;
 const float limitInferiorTemperatura = 18;
 const float limitInferiorHumitat = 60;
-const float limitInferiorLluminositat = 600;
+const float limitInferiorLluminositat = 500;
 
 DHT dht(DHT_PIN, DHT11);
 Adafruit_SSD1306 display(128, 64, &Wire, OLED_RESET);
@@ -66,6 +69,8 @@ void setup() {
     Serial.println(F("SSD1306 allocation failed"));
     for(;;);
   }
+
+  pinMode(buzzerPin, OUTPUT); // Afegit buzzer
 
   display.display();
   delay(2000);
@@ -107,6 +112,7 @@ void putdata(const char* sensor, float value) {
   }
 }
 
+// Metode Get per obtenir les 10 ultimes dades del sensor
 void analisidades(const char* sensor) {
   WiFiClient client;
   const int httpPort = 8081;
@@ -179,6 +185,33 @@ void analisidades(const char* sensor) {
   }
 }
 
+// Función para detener el tono en el Buzzer Pasivo
+void noTone(int pin) {
+  if (pin < 0 || pin >= NUM_DIGITAL_PINS) {
+    return;  // Salir si el pin no es válido
+  }
+
+  ledcDetachPin(pin);
+}
+
+void tone(int pin, int frequency, int duration) {
+  if (pin < 0 || pin >= NUM_DIGITAL_PINS || frequency == 0) {
+    return;  // Salir si el pin no es válido o la frecuencia es cero
+  }
+
+  ledcAttachPin(pin, 0);
+  ledcWriteTone(0, frequency);
+  delay(duration);
+  noTone(pin);
+}
+
+void alertaSonido() {
+  // Genera un tono de alerta
+  tone(buzzerPin, 900, 3000);  // Cambia la frecuencia según tus preferencias
+  delay(6000);  // Puedes ajustar la duración del tono
+  noTone(buzzerPin);  // Detiene el sonido
+}
+
 void loop() {
 
   float humidity = dht.readHumidity();
@@ -200,26 +233,7 @@ void loop() {
 
   // Limpia el display
   display.clearDisplay();
-
-  if (temperature > limitSuperiorTemperatura || temperature < limitInferiorLluminositat) {
-    display.setCursor(0, 40);
-    display.print("¡Alerta! Alta temperatura");
-  }
-
-  if (humidity > limitSuperiorHumitat || humidity < limitInferiorHumitat) {
-    display.setCursor(0, 50);
-    display.print("¡Alerta! Alta temperatura");
-  }
-
-  if (ldrValue1 > limitSuperiorLluminositat || ldrValue2 > limitSuperiorLluminositat || ldrValue1 < limitInferiorLluminositat || ldrValue2 < limitInferiorLluminositat ) {
-    display.setCursor(0, 60);
-    display.print("¡Alerta! Baja luminosidad");
-  }
-
-  else {
-  display.setCursor(0, 60);
-  display.print("Todo en orden");
-  }
+  delay(1000);
 
   // Imprime los valores en el display
   display.setTextSize(1);
@@ -240,9 +254,44 @@ void loop() {
   display.print("LDR1: ");
   display.print(ldrValue1);
 
-  display.setCursor(0, 30);
+  display.setCursor(70, 20);
   display.print("LDR2: ");
   display.print(ldrValue2);
+
+  if (temperature > limitSuperiorTemperatura || temperature < limitInferiorTemperatura) {
+    display.setCursor(0, 30);
+    alertaSonido();
+    if(temperature > limitSuperiorTemperatura){
+      display.print("¡Alta temperatura!");
+    }
+    else{
+      display.print("¡Baja temperatura!");
+    }
+  } 
+  if (humidity > limitSuperiorHumitat || humidity < limitInferiorHumitat) {
+    display.setCursor(0, 40);
+    alertaSonido();
+    if(humidity > limitSuperiorHumitat){
+      display.print("¡Alta Humedad!");
+    }
+    else{
+      display.print("¡Baja Humedad!");
+    }
+  } 
+  if (ldrValue1 > limitSuperiorLluminositat || ldrValue2 > limitSuperiorLluminositat || ldrValue1 < limitInferiorLluminositat || ldrValue2 < limitInferiorLluminositat ) {
+    display.setCursor(0, 50);
+    alertaSonido();
+    if(ldrValue1 > limitSuperiorLluminositat || ldrValue2 > limitSuperiorLluminositat){
+      display.print("¡Alta luminosidad!");
+    }
+    else{
+      display.print("¡Baja luminosidad!");
+    }
+  }
+  else {
+    display.setCursor(0, 40);
+    display.print("Todo en orden");
+  }
 
   // Muestra los datos en el display
   display.display();
@@ -261,6 +310,6 @@ void loop() {
 
   Serial.print("Valor del sensor LDR2: ");
   Serial.println(ldrValue2);
-  delay(120000);
+  delay(15000);
 }
 
