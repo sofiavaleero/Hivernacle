@@ -43,7 +43,7 @@ const float limitSuperiorHumitat = 70;
 const float limitSuperiorLluminositat = 700;
 const float limitInferiorTemperatura = 18;
 const float limitInferiorHumitat = 60;
-const float limitInferiorLluminositat = 500;
+const float limitInferiorLluminositat = 600;
 
 DHT dht(DHT_PIN, DHT11);
 Adafruit_SSD1306 display(128, 64, &Wire, OLED_RESET);
