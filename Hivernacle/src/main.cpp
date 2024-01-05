@@ -24,11 +24,11 @@ const char* sensor4 = "ldr2/";
 const int ldrPin1 = 32; // Pin del sensor LDR1
 const int ldrPin2 = 34; // Pin del sensor LDR2
 const int buzzerPin = 27; // Pin del buzzer AFEGIIIIIT
-const float limitSuperiorTemperatura = 24;
-const float limitSuperiorHumitat = 70;
+const float limitSuperiorTemperatura = 30;
+const float limitSuperiorHumitat = 60;
 const float limitSuperiorLluminositat = 700;
-const float limitInferiorTemperatura = 18;
-const float limitInferiorHumitat = 60;
+const float limitInferiorTemperatura = 10;
+const float limitInferiorHumitat = 45;
 const float limitInferiorLluminositat = 600;
 
 DHT dht(DHT_PIN, DHT11);
@@ -187,7 +187,7 @@ void loop() {
   display.setTextSize(1);
   display.setTextColor(SSD1306_WHITE);
   display.setCursor(0, 0);
-  display.print("Temp: ");
+  display.print("Temperatura: ");
   display.print(temperature);
   display.print(" C");
 
@@ -245,7 +245,8 @@ void loop() {
   display.display();
 
   // Imprime los valores por pantalla ordenador
-  Serial.print("");
+  Serial.println(" ");
+
   Serial.print("Temperatura: ");
   Serial.print(temperature);
   Serial.println(" °C");
