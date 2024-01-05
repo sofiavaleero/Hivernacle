@@ -2,13 +2,8 @@
 #include <Wire.h>
 #include <DHT.h>
 #include <ArduinoJson.h>
-#include <SD.h>
-#include <SPI.h>
-#include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 #include <Adafruit_I2CDevice.h>
-#include <algorithm>
-#include <driver/ledc.h>
 
 // Configura tus credenciales de WiFi
 const char *ssid = "iPhone de Paula";
