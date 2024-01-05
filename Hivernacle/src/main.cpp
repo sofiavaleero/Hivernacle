@@ -10,7 +10,6 @@
 #include <algorithm>
 #include <driver/ledc.h>
 
-
 // Configura tus credenciales de WiFi
 const char *ssid = "iPhone de Paula";
 const char *password = "f472547F";
@@ -23,14 +22,6 @@ const char* sensor1 = "humitat/";
 const char* sensor2 = "temperatura/";
 const char* sensor3 = "ldr1/";
 const char* sensor4 = "ldr2/";
-//const char* sensor = "light/";
-// float LDRvalue = "500.0"
-//const char* value = "500.0"; //Ajustar a quin serà el valor inicial de la lluminositat
-
-//Actualització de comandes PUT POST GET DELETE
-//GET
-//const char* getreq = "GET /data/grup_3-101//humidity/20.9 HTTP/1.1\r\nIDENTITY_KEY: 9073208bedcc80ccdb7080bb24499bc92078e91a5997cb9e8c7b83d3643f9a53\r\n\r\n"
-//const char* getreqLDR = "GET /data/grup_3-101//light/500.1 HTTP/1.1\r\nIDENTITY_KEY: 9073208bedcc80ccdb7080bb24499bc92078e91a5997cb9e8c7b83d3643f9a53\r\n\r\n"
 
 // Configura los pines de los sensores
 #define DHT_PIN 5      // Pin de datos del sensor DHT11
@@ -112,7 +103,7 @@ void putdata(const char* sensor, float value) {
   }
 }
 
-// Metode Get per obtenir les 10 ultimes dades del sensor
+// Metode Get per obtenir les 8 ultimes dades del sensor així treu les dades d'un dia sencer 24h
 void analisidades(const char* sensor) {
   WiFiClient client;
   const int httpPort = 8081;
@@ -121,7 +112,7 @@ void analisidades(const char* sensor) {
     client.print("GET /data/");
     client.print(provider);
     client.print(sensor);
-    client.print("/?limit=5 HTTP/1.1\r\n");
+    client.print("/?limit=8 HTTP/1.1\r\n");
     client.print("IDENTITY_KEY: ");
     client.print(token);
     client.print("\r\n\r\n");
@@ -139,45 +130,7 @@ void analisidades(const char* sensor) {
     char buffer[capacity];
     size_t bytesRead = client.readBytes(buffer, capacity);
 
-    Serial.println("Response:");
     Serial.write(buffer, bytesRead);
-
-    DynamicJsonDocument doc(capacity);
-
-    DeserializationError error = deserializeJson(doc, buffer, bytesRead);
-    if (error) {
-      Serial.print(F("Error al deserializar JSON: "));
-      Serial.println(error.c_str());
-      return;
-    }
-
-    // Acceder a la matriz de observaciones
-    JsonArray observations = doc["observations"];
-    
-    float sumValues = 0.0;
-    int countValues = 0;
-
-    // Bucle para procesar las observaciones
-    for (JsonObject observation : observations) {
-      float value = observation["value"].as<float>();
-      sumValues += value;
-      countValues++;
-
-      String timestamp = observation["timestamp"].as<String>();
-      Serial.print("Value: ");
-      Serial.println(value);
-      Serial.print("Timestamp: ");
-      Serial.println(timestamp);
-    }
-
-    Serial.print("Cantidad de valores: ");
-    Serial.println(countValues);
-
-    if (countValues > 0) {
-      float average = sumValues / static_cast<float>(countValues);
-      Serial.print("Average: ");
-      Serial.println(average);
-    }
 
     client.stop();
   } else {
@@ -296,7 +249,8 @@ void loop() {
   // Muestra los datos en el display
   display.display();
 
-  // Imprime los valores
+  // Imprime los valores por pantalla ordenador
+  Serial.print("");
   Serial.print("Temperatura: ");
   Serial.print(temperature);
   Serial.println(" °C");
@@ -310,6 +264,6 @@ void loop() {
 
   Serial.print("Valor del sensor LDR2: ");
   Serial.println(ldrValue2);
-  delay(15000);
+  delay(10800000); //CADA 3 HORAS
 }
 
