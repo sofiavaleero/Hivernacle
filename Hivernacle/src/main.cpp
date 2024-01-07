@@ -132,10 +132,10 @@ void analisidades(const char* sensor) {
   }
 }
 
-// Función para detener el tono en el Buzzer Pasivo
+// Funció per detenir el so en el Buzzer Passiu
 void noTone(int pin) {
   if (pin < 0 || pin >= NUM_DIGITAL_PINS) {
-    return;  // Salir si el pin no es válido
+    return;  // Surt quan el pin no és vàlid
   }
 
   ledcDetachPin(pin);
@@ -143,7 +143,7 @@ void noTone(int pin) {
 
 void tone(int pin, int frequency, int duration) {
   if (pin < 0 || pin >= NUM_DIGITAL_PINS || frequency == 0) {
-    return;  // Salir si el pin no es válido o la frecuencia es cero
+    return;  // Surt quan el pin no és vàlid o la freqüència és 0
   }
 
   ledcAttachPin(pin, 0);
@@ -153,10 +153,10 @@ void tone(int pin, int frequency, int duration) {
 }
 
 void alertaSonido() {
-  // Genera un tono de alerta
-  tone(buzzerPin, 900, 3000);  // Cambia la frecuencia según tus preferencias
-  delay(6000);  // Puedes ajustar la duración del tono
-  noTone(buzzerPin);  // Detiene el sonido
+  // Genera un so d'alerta
+  tone(buzzerPin, 900, 3000);  // freqüència
+  delay(6000);  // duració del so
+  noTone(buzzerPin);  // para el so
 }
 
 void loop() {
@@ -164,7 +164,7 @@ void loop() {
   float humidity = dht.readHumidity();
   float temperature1 = dht.readTemperature();
   float temperature = calibrateTemperature(temperature1);
-  // Lee el valor del sensor LDR
+  // Llegeix el valor del sensor LDR
   int ldrValue1 = analogRead(ldrPin1);
   int ldrValue2 = analogRead(ldrPin2);
 
@@ -182,7 +182,7 @@ void loop() {
   display.clearDisplay();
   delay(1000);
 
-  // Imprime los valores en el display
+  // Imprimeix els valors en el display
   display.setTextSize(1);
   display.setTextColor(SSD1306_WHITE);
   display.setCursor(0, 0);
@@ -190,13 +190,13 @@ void loop() {
   display.print(temperature);
   display.print(" C");
 
-  //Valor Humedad
+  //Valor Humitat
   display.setCursor(0, 10);
   display.print("Humedad: ");
   display.print(humidity);
   display.print(" %");
 
-  //Valor Luz
+  //Valor Llum
   display.setCursor(0, 20);
   display.print("LDR1: ");
   display.print(ldrValue1);
@@ -240,10 +240,10 @@ void loop() {
     display.print("Todo en orden");
   }
 
-  // Muestra los datos en el display
+  // Mostra les dades en el display
   display.display();
 
-  // Imprime los valores por pantalla ordenador
+  // Imprimeix els valors per pantalla
   Serial.println(" ");
 
   Serial.print("Temperatura: ");
