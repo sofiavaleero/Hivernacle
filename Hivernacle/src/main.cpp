@@ -5,11 +5,11 @@
 #include <Adafruit_SSD1306.h>
 #include <Adafruit_I2CDevice.h>
 
-// Configura tus credenciales de WiFi
 const char *ssid = "iPhone de Paula";
 const char *password = "f472547F";
 
-// Direccion del servidor Sentilo
+
+// Direcció del servidor Sentilo
 const char* host = "147.83.83.21";
 const char* token = "f3ac6fb7b1657a691e28dec382a41e0182f2289bd13f120e399f008bb03ed2f9";
 const char* provider = "grup_3-101@grup3_provider/";
@@ -18,12 +18,12 @@ const char* sensor2 = "temperatura/";
 const char* sensor3 = "ldr1/";
 const char* sensor4 = "ldr2/";
 
-// Configura los pines de los sensores
-#define DHT_PIN 5      // Pin de datos del sensor DHT11
-#define OLED_RESET 22   // Pin de datos de la pantalla
+// Configuració dels pins dels sensors
+#define DHT_PIN 5      // Pin de dades del sensor DHT11
+#define OLED_RESET 22   // Pin de dades de la pantalla
 const int ldrPin1 = 32; // Pin del sensor LDR1
 const int ldrPin2 = 34; // Pin del sensor LDR2
-const int buzzerPin = 27; // Pin del buzzer AFEGIIIIIT
+const int buzzerPin = 27; //Pin del buzzer afegit
 const float limitSuperiorTemperatura = 30;
 const float limitSuperiorHumitat = 60;
 const float limitSuperiorLluminositat = 700;
@@ -38,7 +38,7 @@ void setup() {
   Serial.begin(115200);
   delay(1000);
 
-  // Conéctate a la red WiFi
+  // Connexió a la xarxa
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
     delay(1000);
@@ -46,11 +46,11 @@ void setup() {
   }
   Serial.println("Conectado a la red WiFi");
 
-  // Inicializa el sensor DHT11
+  // Inicialització del sensor DHT11
   dht.begin();
   delay(5000);
 
-  // Inicializa el display OLED
+  // Inicialització del display OLED
   if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
     Serial.println(F("SSD1306 allocation failed"));
     for(;;);
@@ -63,9 +63,8 @@ void setup() {
   display.clearDisplay();
 }
 
-// Función para calibrar la temperatura
+// Funció per calibrar la temperatura
 float calibrateTemperature(float currentTemperature) {
-  // Aplica la corrección
   float calibratedTemperature = currentTemperature - 3.0;
   return calibratedTemperature;
 }
